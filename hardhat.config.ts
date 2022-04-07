@@ -23,7 +23,12 @@ module.exports = {
       },
       {
         version: "0.6.6",
-        settings: {},
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1000,
+          },
+        },
       },
     ],
   },
