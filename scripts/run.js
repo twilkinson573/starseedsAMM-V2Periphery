@@ -78,14 +78,17 @@ const main = async () => {
   console.log('Amount of trading pairs #: ', await fct.allPairsLength());
 
   // NOTE This is currently failing (correctly) due to insufficient liquidity (as none has been provided yet)
-  console.log('Making test swap')
-  const pair1 = await hre.ethers.getContractAt("UniswapV2Pair", await fct.allPairs(0));
-  await pair1.swap(10, 10, bob.address, "0x00");
+  // Just a sanity check that everything is working - we will make swaps below using V2Router02
+  // console.log('Making test swap')
+  // const pair1 = await hre.ethers.getContractAt("UniswapV2Pair", await fct.allPairs(0));
+  // await pair1.swap(10, 10, bob.address, "0x00");
 
 
   // !!! TODO !!! FURTHER - THIS USES V2-PERIPHERY 
 
-  // todo: Add liquidity
+  // todo: SET UP ROUTER
+
+  // todo: Add liquidity with Router
 
   // todo: Retail users make swaps using the pairs
 
