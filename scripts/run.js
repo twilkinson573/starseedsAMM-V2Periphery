@@ -84,11 +84,15 @@ const main = async () => {
   console.log('Factory fees accrue to: ', await factory.feeTo());
   console.log(' ');
 
+  console.log('####### Deploying V2Router \n')
+
   const Router = await hre.ethers.getContractFactory("UniswapV2Router02");
   const router = await Router.deploy(factory.address, weth.address)
   await router.deployed();
 
-  console.log('Router deployed to: ', router.address);
+  console.log('Router deployed to: ', await router.address);
+  console.log('Router factory: ', await router.factory());
+  console.log('Router WETH: ', await router.WETH());
   console.log(' ');
  
 
@@ -98,7 +102,7 @@ const main = async () => {
   // await bobSetFeeToTxn.wait();
 
   // Call Factory#createPair to instantiate a few trading pairs
-  console.log("####### Creating the AMM trading pairs")
+  console.log("####### Creating the AMM trading pairs \n")
   console.log('Create USDC / MATIC trading pair...')
   await factory.createPair(usdc.address, matic.address);
   console.log('USDC / MATIC trading pair deployed to: ', await factory.allPairs(0));
@@ -123,9 +127,31 @@ const main = async () => {
   // const pair1 = await hre.ethers.getContractAt("UniswapV2Pair", await factory.allPairs(0));
   // await pair1.swap(10, 10, bob.address, "0x00");
 
-  console.log("####### Adding liquidity to Trading Pairs using V2Router")
-  // todo: Add liquidity with Router
-  
+  console.log("####### Adding liquidity to Trading Pairs using V2Router \n")
+
+  console.log("Adding USDC / MATIC Liquidity...")
+
+  const pair1 = await hre.ethers.getContractAt("UniswapV2Pair", await factory.getPair(usdc.address, matic.address));
+  console.log("USDC / MATIC pair:", await pair1.address);
+
+  // give allowances for deployer to addLiquidity
+  const deployerApproveUsdcTxn = await usdc.approve(router.address, ethers.utils.parseUnits("1000000.0"));
+  await deployerApproveUsdcTxn.wait();
+  const deployerApproveMaticTxn = await matic.approve(router.address, ethers.utils.parseUnits("1000000.0"));
+  await deployerApproveMaticTxn.wait();
+
+  const timestamp = new Date().getTime() + 3600*1000;
+
+  await router.addLiquidity(
+    usdc.address, 
+    matic.address,
+    hre.ethers.utils.parseUnits("10000.0"),
+    hre.ethers.utils.parseUnits("5000.0"),
+    hre.ethers.utils.parseUnits("9000.0"),
+    hre.ethers.utils.parseUnits("4000.0"),
+    deployer.address,
+    timestamp
+  )
 
   // todo: Retail users make swaps using the pairs
 
