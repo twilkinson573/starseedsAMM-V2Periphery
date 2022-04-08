@@ -4,6 +4,8 @@ const main = async () => {
 
   // VARS =====================================================================
 
+  // deployer == highly funded protocol dev account to provide liquidty
+  // bob, jane == retail users
   const [deployer, bob, jane] = await hre.ethers.getSigners();
   console.log('Deploying contracts with master account: ', deployer.address);
   console.log(' ');
@@ -16,6 +18,10 @@ const main = async () => {
   const usdc = await Usdc.deploy("USDC", "USDC", hre.ethers.utils.parseUnits("1000000.0"));
   await usdc.deployed();
 
+  await usdc.transfer(deployer.address, ethers.utils.parseUnits("100000.0"));
+  await usdc.transfer(bob.address, ethers.utils.parseUnits("10000.0"));
+  await usdc.transfer(jane.address, ethers.utils.parseUnits("20000.0"));
+
   console.log('USDC ERC20 deployed to: ', usdc.address);
   console.log('USDC total supply: ', await usdc.totalSupply());
   console.log(' ');
@@ -24,6 +30,10 @@ const main = async () => {
   const matic = await Matic.deploy("MATIC", "MATIC", hre.ethers.utils.parseUnits("1000000.0"));
   await matic.deployed();
 
+  await matic.transfer(deployer.address, ethers.utils.parseUnits("100000.0"));
+  await matic.transfer(bob.address, ethers.utils.parseUnits("10000.0"));
+  await matic.transfer(jane.address, ethers.utils.parseUnits("20000.0"));
+
   console.log('MATIC ERC20 deployed to: ', matic.address);
   console.log('MATIC total supply: ', await matic.totalSupply());
   console.log(' ');
@@ -31,6 +41,10 @@ const main = async () => {
   const Dai = await hre.ethers.getContractFactory("ERC20");
   const dai = await Dai.deploy("MATIC", "MATIC", hre.ethers.utils.parseUnits("1000000.0"));
   await dai.deployed();
+
+  await dai.transfer(deployer.address, ethers.utils.parseUnits("100000.0"));
+  await dai.transfer(bob.address, ethers.utils.parseUnits("10000.0"));
+  await dai.transfer(jane.address, ethers.utils.parseUnits("20000.0"));
 
   console.log('DAI ERC20 deployed to: ', dai.address);
   console.log('DAI total supply: ', await dai.totalSupply());
@@ -41,9 +55,14 @@ const main = async () => {
   const weth = await Weth.deploy();
   await weth.deployed();
 
-  // Deposit 5000 ETH from deployer account to fund test amounts of wETH
-  await weth.deposit({value: ethers.utils.parseEther("5000.0")})
+  // Deposit 500 ETH from deployer account to fund test amounts of wETH
+  await weth.deposit({value: ethers.utils.parseEther("500.0")})
 
+  const bobWethDepositTxn = await weth.connect(bob).deposit({value: ethers.utils.parseEther("5.0")})
+  await bobWethDepositTxn.wait();
+  const janeWethDepositTxn = await weth.connect(jane).deposit({value: ethers.utils.parseEther("15.0")})
+  await janeWethDepositTxn.wait();
+ 
   console.log('wETH deployed to: ', weth.address);
   console.log('wETH total supply: ', await weth.totalSupply());
   console.log(' ');
@@ -79,7 +98,7 @@ const main = async () => {
   // await bobSetFeeToTxn.wait();
 
   // Call Factory#createPair to instantiate a few trading pairs
-  console.log("####### Creating trading pairs")
+  console.log("####### Creating the AMM trading pairs")
   console.log('Create USDC / MATIC trading pair...')
   await factory.createPair(usdc.address, matic.address);
   console.log('USDC / MATIC trading pair deployed to: ', await factory.allPairs(0));
@@ -104,12 +123,9 @@ const main = async () => {
   // const pair1 = await hre.ethers.getContractAt("UniswapV2Pair", await factory.allPairs(0));
   // await pair1.swap(10, 10, bob.address, "0x00");
 
-
-  // !!! TODO !!! FURTHER - THIS USES V2-PERIPHERY 
-
-  // todo: SET UP ROUTER
-
+  console.log("####### Adding liquidity to Trading Pairs using V2Router")
   // todo: Add liquidity with Router
+  
 
   // todo: Retail users make swaps using the pairs
 
