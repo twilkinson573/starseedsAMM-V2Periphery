@@ -40,7 +40,9 @@ const main = async () => {
   const Weth = await hre.ethers.getContractFactory("WETH9");
   const weth = await Weth.deploy();
   await weth.deployed();
-  await weth.deposit{value: msg.sender.balance / 2}();
+
+  // Deposit 5000 ETH from deployer account to fund test amounts of wETH
+  await weth.deposit({value: ethers.utils.parseEther("5000.0")})
 
   console.log('wETH deployed to: ', weth.address);
   console.log('wETH total supply: ', await weth.totalSupply());
