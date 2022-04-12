@@ -120,6 +120,7 @@ const main = async () => {
   // await factory.createPair(matic.address, usdc.address);
 
   console.log('Amount of trading pairs #: ', await factory.allPairsLength());
+  console.log(' ');
 
   // NOTE This is currently failing (correctly) due to insufficient liquidity (as none has been provided yet)
   // Just a sanity check that everything is working - we will make swaps below using V2Router02
@@ -131,14 +132,21 @@ const main = async () => {
 
   console.log("Adding USDC / MATIC Liquidity...")
 
-  const pair1 = await hre.ethers.getContractAt("UniswapV2Pair", await factory.getPair(usdc.address, matic.address));
-  console.log("USDC / MATIC pair:", await pair1.address);
-
   // give allowances for deployer to addLiquidity
   const deployerApproveUsdcTxn = await usdc.approve(router.address, ethers.utils.parseUnits("1000000.0"));
   await deployerApproveUsdcTxn.wait();
   const deployerApproveMaticTxn = await matic.approve(router.address, ethers.utils.parseUnits("1000000.0"));
   await deployerApproveMaticTxn.wait();
+
+  const pair1 = await hre.ethers.getContractAt("UniswapV2Pair", await factory.getPair(usdc.address, matic.address));
+
+  const bobapproveusdctxn = await usdc.connect(bob).approve(router.address, ethers.utils.parseUnits("1000000.0"));
+  await bobapproveusdctxn.wait();
+  const bobApproveMaticTxn = await matic.connect(bob).approve(router.address, ethers.utils.parseUnits("1000000.0"));
+  await bobApproveMaticTxn.wait();
+
+  const bobApproveUsdcTxn = await usdc.connect(bob).approve(pair1.address, ethers.utils.parseUnits("1000000.0"));
+  await bobApproveUsdcTxn.wait();
 
   const timestamp = new Date().getTime() + 3600*1000;
 
@@ -147,13 +155,45 @@ const main = async () => {
     matic.address,
     hre.ethers.utils.parseUnits("10000.0"),
     hre.ethers.utils.parseUnits("5000.0"),
-    hre.ethers.utils.parseUnits("9000.0"),
-    hre.ethers.utils.parseUnits("4000.0"),
+    hre.ethers.utils.parseUnits("10000.0"),
+    hre.ethers.utils.parseUnits("5000.0"),
     deployer.address,
     timestamp
   )
 
-  // todo: Retail users make swaps using the pairs
+  const [usdcReserve, maticReserve, _] = await pair1.getReserves();
+  console.log(`USDC/MATIC reserves: ${ethers.utils.formatEther(usdcReserve)} USDC / ${ethers.utils.formatEther(maticReserve)} MATIC`);
+
+  const amountIn1 = hre.ethers.utils.parseUnits("1000.0");
+  // const amountOutMin1 = hre.ethers.utils.parseUnits("100.0");
+
+  const amountOutMin1 = await router.connect(bob).getAmountOut(
+    amountIn1,
+    usdcReserve,
+    maticReserve
+  )
+
+  console.log("amountIn = ", ethers.utils.formatEther(amountIn1));
+  console.log("amountOutMin = ", ethers.utils.formatEther(amountOutMin1));
+
+  console.log("Quote:", ethers.utils.formatEther(await router.quote(amountIn1, usdcReserve, maticReserve)));
+
+  // Retail users make swaps using the pairs
+  await router.connect(bob).swapExactTokensForTokens(
+    amountIn1,
+    amountOutMin1,
+    [usdc.address, matic.address],
+    bob.address,
+    timestamp
+  );
+
+  console.log("USDC/MATIC reserves: ", await pair1.getReserves());
+
+  // remove liquidity (with rewards?)
+
+
+  // check all fees
+
 
 };
 
