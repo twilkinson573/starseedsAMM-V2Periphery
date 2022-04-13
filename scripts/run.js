@@ -115,6 +115,10 @@ const main = async () => {
   await factory.createPair(usdc.address, dai.address);
   console.log('USDC / DAI trading pair deployed to: ', await factory.allPairs(2));
 
+  console.log('Create USDC / WETH trading pair...')
+  await factory.createPair(usdc.address, weth.address);
+  console.log('USDC / WETH trading pair deployed to: ', await factory.allPairs(2));
+
   // NOTE - The following (rightfully) won't work due to pair existing protections
   // console.log('Attempting to create duplicate MATIC / USDC trading pair (should fail)...')
   // await factory.createPair(matic.address, usdc.address);
@@ -122,9 +126,9 @@ const main = async () => {
   console.log('Amount of trading pairs #: ', await factory.allPairsLength());
   console.log(' ');
 
-  // NOTE This is currently failing (correctly) due to insufficient liquidity (as none has been provided yet)
+  // NOTE This fails (rightfully) due to insufficient liquidity (as none has been provided yet)
   // Just a sanity check that everything is working - we will make swaps below using V2Router02
-  // console.log('Making test swap')
+  // console.log('Making test swap (should fail)')
   // const pair1 = await hre.ethers.getContractAt("UniswapV2Pair", await factory.allPairs(0));
   // await pair1.swap(10, 10, bob.address, "0x00");
 
@@ -137,16 +141,19 @@ const main = async () => {
   await deployerApproveUsdcTxn.wait();
   const deployerApproveMaticTxn = await matic.approve(router.address, ethers.utils.parseUnits("1000000.0"));
   await deployerApproveMaticTxn.wait();
+  const deployerApproveDaiTxn = await dai.approve(router.address, ethers.utils.parseUnits("1000000.0"));
+  await deployerApproveDaiTxn.wait();
 
   const pair1 = await hre.ethers.getContractAt("UniswapV2Pair", await factory.getPair(usdc.address, matic.address));
+  const pair2 = await hre.ethers.getContractAt("UniswapV2Pair", await factory.getPair(usdc.address, dai.address));
+  const pair3 = await hre.ethers.getContractAt("UniswapV2Pair", await factory.getPair(dai.address, matic.address));
 
   const bobapproveusdctxn = await usdc.connect(bob).approve(router.address, ethers.utils.parseUnits("1000000.0"));
   await bobapproveusdctxn.wait();
   const janeApproveMaticTxn = await matic.connect(jane).approve(router.address, ethers.utils.parseUnits("1000000.0"));
   await janeApproveMaticTxn.wait();
-
-  const bobApproveUsdcTxn = await usdc.connect(bob).approve(pair1.address, ethers.utils.parseUnits("1000000.0"));
-  await bobApproveUsdcTxn.wait();
+  const janeApproveDaiTxn = await dai.connect(jane).approve(router.address, ethers.utils.parseUnits("1000000.0"));
+  await janeApproveDaiTxn.wait();
 
   const timestamp = new Date().getTime() + 3600*1000;
 
@@ -161,10 +168,36 @@ const main = async () => {
     timestamp
   )
 
-  const [usdcReserve, maticReserve, _] = await pair1.getReserves();
+  await router.addLiquidity(
+    usdc.address, 
+    dai.address,
+    hre.ethers.utils.parseUnits("1000.0"),
+    hre.ethers.utils.parseUnits("1000.0"),
+    hre.ethers.utils.parseUnits("1000.0"),
+    hre.ethers.utils.parseUnits("1000.0"),
+    deployer.address,
+    timestamp
+  )
+
+  await router.addLiquidity(
+    dai.address, 
+    matic.address,
+    hre.ethers.utils.parseUnits("10000.0"),
+    hre.ethers.utils.parseUnits("5000.0"),
+    hre.ethers.utils.parseUnits("10000.0"),
+    hre.ethers.utils.parseUnits("5000.0"),
+    deployer.address,
+    timestamp
+  )
+
+  let [usdcReserve, maticReserve, _] = await pair1.getReserves();
+  let [usdcReserve1, daiReserve, _1] = await pair2.getReserves();
+  let [daiReserve1, maticReserve1, _2] = await pair3.getReserves();
   console.log(`USDC/MATIC reserves: ${ethers.utils.formatEther(usdcReserve)} USDC / ${ethers.utils.formatEther(maticReserve)} MATIC`);
   console.log(" ");
 
+  console.log("######## Perfoming Swap #1:");
+  
   const amountIn1 = hre.ethers.utils.parseUnits("1000.0");
 
   const amountOutMin1 = await router.connect(bob).getAmountOut(
@@ -172,14 +205,12 @@ const main = async () => {
     usdcReserve,
     maticReserve
   )
-  console.log("######## Perfoming Swap #1:");
   console.log("amountIn = ", ethers.utils.formatEther(amountIn1));
   console.log("amountOutMin = ", ethers.utils.formatEther(amountOutMin1));
   console.log(`Bob swaps ${ethers.utils.formatEther(amountIn1)} USDC for ${ethers.utils.formatEther(amountOutMin1)} MATIC`)
 
   console.log("Quote:", ethers.utils.formatEther(await router.quote(amountIn1, usdcReserve, maticReserve)));
 
-  // Retail users make swaps using the pairs
   await router.connect(bob).swapExactTokensForTokens(
     amountIn1,
     amountOutMin1,
@@ -191,6 +222,9 @@ const main = async () => {
   console.log("USDC/MATIC reserves: ", await pair1.getReserves());
   console.log(" ");
 
+  console.log("######## Perfoming Swap #2:");
+
+  [usdcReserve, maticReserve, _] = await pair1.getReserves();
   const amountIn2 = hre.ethers.utils.parseUnits("100.0");
 
   const amountOutMin2 = await router.connect(jane).getAmountOut(
@@ -199,14 +233,12 @@ const main = async () => {
     usdcReserve
   )
 
-  console.log("######## Perfoming Swap #2:");
   console.log("amountIn = ", ethers.utils.formatEther(amountIn2));
   console.log("amountOutMin = ", ethers.utils.formatEther(amountOutMin2));
   console.log(`Jane swaps ${ethers.utils.formatEther(amountIn2)} MATIC for ${ethers.utils.formatEther(amountOutMin2)} USDC`)
 
   console.log("Quote:", ethers.utils.formatEther(await router.quote(amountIn2, maticReserve, usdcReserve)));
 
-  // Retail users make swaps using the pairs
   await router.connect(jane).swapExactTokensForTokens(
     amountIn2,
     amountOutMin2,
@@ -219,7 +251,32 @@ const main = async () => {
   console.log(" ");
 
 
-  // Attempt multi-pair swap
+  console.log("######## Perfoming Swap #3 (multi-pair):");
+  [usdcReserve, maticReserve, _] = await pair1.getReserves();
+  const amountIn3 = hre.ethers.utils.parseUnits("150.0");
+  const amountsOutMin3 = await router.connect(jane).getAmountsOut(
+    amountIn3,
+    [dai.address, usdc.address, matic.address]
+  )
+
+  console.log("Multiswap route, amounts out at each stage:", amountsOutMin3);
+
+  console.log("amountIn = ", ethers.utils.formatEther(amountIn3));
+  console.log("amountOutMin = ", ethers.utils.formatEther(amountsOutMin3[2]));
+  console.log(`Jane swaps ${ethers.utils.formatEther(amountIn3)} DAI for ${ethers.utils.formatEther(amountsOutMin3[2])} MATIC via USDC`)
+
+  await router.connect(jane).swapExactTokensForTokens(
+    amountIn3,
+    amountsOutMin3[2],
+    [dai.address, usdc.address, matic.address],
+    jane.address,
+    timestamp
+  );
+
+  console.log("USDC/MATIC reserves: ", await pair1.getReserves());
+  console.log("USDC/DAI reserves: ", await pair2.getReserves());
+  console.log("DAI/MATIC reserves: ", await pair3.getReserves());
+  console.log(" ");
 
 
   // remove liquidity (with rewards?)
