@@ -28,6 +28,10 @@ contract WETH9 {
     mapping (address => uint)                       public  balanceOf;
     mapping (address => mapping (address => uint))  public  allowance;
 
+    // constructor(uint _initialSupply) public {
+    //   balanceOf[address(this)] = _initialSupply;
+    // }
+
     // function() public payable {
     //     deposit();
     // }
@@ -35,6 +39,7 @@ contract WETH9 {
         balanceOf[msg.sender] += msg.value;
         emit Deposit(msg.sender, msg.value);
     }
+    
     function withdraw(uint wad) public {
         require(balanceOf[msg.sender] >= wad, "");
         balanceOf[msg.sender] -= wad;
