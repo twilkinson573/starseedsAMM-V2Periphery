@@ -225,7 +225,7 @@ const main = async () => {
   // remove liquidity (with rewards?)
 
 
-  // check all fees are accrueing correctly
+  // check all fees are accrueing correctly to both protocol & LP holders
 
 
 };
