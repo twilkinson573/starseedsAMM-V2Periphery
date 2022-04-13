@@ -142,8 +142,8 @@ const main = async () => {
 
   const bobapproveusdctxn = await usdc.connect(bob).approve(router.address, ethers.utils.parseUnits("1000000.0"));
   await bobapproveusdctxn.wait();
-  const bobApproveMaticTxn = await matic.connect(bob).approve(router.address, ethers.utils.parseUnits("1000000.0"));
-  await bobApproveMaticTxn.wait();
+  const janeApproveMaticTxn = await matic.connect(jane).approve(router.address, ethers.utils.parseUnits("1000000.0"));
+  await janeApproveMaticTxn.wait();
 
   const bobApproveUsdcTxn = await usdc.connect(bob).approve(pair1.address, ethers.utils.parseUnits("1000000.0"));
   await bobApproveUsdcTxn.wait();
@@ -163,18 +163,19 @@ const main = async () => {
 
   const [usdcReserve, maticReserve, _] = await pair1.getReserves();
   console.log(`USDC/MATIC reserves: ${ethers.utils.formatEther(usdcReserve)} USDC / ${ethers.utils.formatEther(maticReserve)} MATIC`);
+  console.log(" ");
 
   const amountIn1 = hre.ethers.utils.parseUnits("1000.0");
-  // const amountOutMin1 = hre.ethers.utils.parseUnits("100.0");
 
   const amountOutMin1 = await router.connect(bob).getAmountOut(
     amountIn1,
     usdcReserve,
     maticReserve
   )
-
+  console.log("######## Perfoming Swap #1:");
   console.log("amountIn = ", ethers.utils.formatEther(amountIn1));
   console.log("amountOutMin = ", ethers.utils.formatEther(amountOutMin1));
+  console.log(`Bob swaps ${ethers.utils.formatEther(amountIn1)} USDC for ${ethers.utils.formatEther(amountOutMin1)} MATIC`)
 
   console.log("Quote:", ethers.utils.formatEther(await router.quote(amountIn1, usdcReserve, maticReserve)));
 
@@ -188,11 +189,43 @@ const main = async () => {
   );
 
   console.log("USDC/MATIC reserves: ", await pair1.getReserves());
+  console.log(" ");
+
+  const amountIn2 = hre.ethers.utils.parseUnits("100.0");
+
+  const amountOutMin2 = await router.connect(jane).getAmountOut(
+    amountIn2,
+    maticReserve,
+    usdcReserve
+  )
+
+  console.log("######## Perfoming Swap #2:");
+  console.log("amountIn = ", ethers.utils.formatEther(amountIn2));
+  console.log("amountOutMin = ", ethers.utils.formatEther(amountOutMin2));
+  console.log(`Jane swaps ${ethers.utils.formatEther(amountIn2)} MATIC for ${ethers.utils.formatEther(amountOutMin2)} USDC`)
+
+  console.log("Quote:", ethers.utils.formatEther(await router.quote(amountIn2, maticReserve, usdcReserve)));
+
+  // Retail users make swaps using the pairs
+  await router.connect(jane).swapExactTokensForTokens(
+    amountIn2,
+    amountOutMin2,
+    [matic.address, usdc.address],
+    jane.address,
+    timestamp
+  );
+
+  console.log("USDC/MATIC reserves: ", await pair1.getReserves());
+  console.log(" ");
+
+
+  // Attempt multi-pair swap
+
 
   // remove liquidity (with rewards?)
 
 
-  // check all fees
+  // check all fees are accrueing correctly
 
 
 };
