@@ -1,12 +1,11 @@
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
 import '@nomiclabs/hardhat-ethers';
+import "@nomiclabs/hardhat-etherscan";
 
 // import "@nomiclabs/hardhat-waffle";
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 
-
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
 
@@ -52,6 +51,22 @@ module.exports = {
         version: "0.8.0",
         settings: { }
       },
+    },
+  },
+  networks: {
+    mumbai: {
+      url: process.env.API_URL,
+      accounts: [process.env.PRIVATE_KEY]
+    },
+    matic: {
+      url: process.env.API_URL,
+      accounts: [process.env.PRIVATE_KEY]
+    },
+  },
+  etherscan: {
+    apiKey: {
+      polygonMumbai: process.env.ETHERSCAN_API_KEY,
+      polygon: process.env.ETHERSCAN_API_KEY,
     },
   },
 };

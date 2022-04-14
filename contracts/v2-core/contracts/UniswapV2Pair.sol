@@ -1,7 +1,5 @@
 pragma solidity =0.5.16;
 
-import "hardhat/console.sol";
-
 import './interfaces/IUniswapV2Pair.sol';
 import './UniswapV2ERC20.sol';
 import './libraries/Math.sol';
@@ -162,12 +160,6 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
         require(amount0Out > 0 || amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         require(amount0Out < _reserve0 && amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
-        console.log(" ");
-        console.log("reserve0:", _reserve0);
-        console.log("reserve1:", _reserve1);
-        console.log("amount0Out:", amount0Out);
-        console.log("amount1Out:", amount1Out);
-
         uint balance0;
         uint balance1;
         { // scope for _token{0,1}, avoids stack too deep errors
@@ -186,21 +178,6 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
         uint balance0Adjusted = balance0.mul(10000).sub(amount0In.mul(22));
         uint balance1Adjusted = balance1.mul(10000).sub(amount1In.mul(22));
-
-        uint newK = balance0Adjusted.mul(balance1Adjusted);
-        uint oldK = uint(_reserve0).mul(_reserve1).mul(100000000);
-
-        // TODO - remove these logging lines before deploy
-        console.log("amount0In:", amount0In);
-        console.log("amount1In:", amount1In);
-        console.log("balance0:", balance0);
-        console.log("balance1:", balance1);
-        console.log("balance0Adjusted:", balance0Adjusted);
-        console.log("balance1Adjusted:", balance1Adjusted);
-        console.log(" ");
-        console.log("New K:", newK);
-        console.log("Old K:", oldK);
-        console.log(" ");
         require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(100000000), 'UniswapV2: K');
         }
 
