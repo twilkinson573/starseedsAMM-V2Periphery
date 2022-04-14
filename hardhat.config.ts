@@ -51,15 +51,15 @@ module.exports = {
         settings: { }
       },
     },
-    networks: {
-      mumbai: {
-        url: process.env.API_URL,
-        accounts: [process.env.PRIVATE_KEY]
-      },
-      matic: {
-        url: process.env.API_URL,
-        accounts: [process.env.PRIVATE_KEY]
-      },
+  },
+  networks: {
+    mumbai: {
+      url: process.env.API_URL,
+      accounts: [process.env.PRIVATE_KEY]
     },
+    // matic: {
+    //   url: process.env.API_URL,
+    //   accounts: [process.env.PRIVATE_KEY]
+    // },
   },
 };
