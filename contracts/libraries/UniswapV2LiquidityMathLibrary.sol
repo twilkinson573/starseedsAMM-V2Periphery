@@ -86,7 +86,7 @@ library UniswapV2LiquidityMathLibrary {
             if (rootK > rootKLast) {
                 uint numerator1 = totalSupply;
                 uint numerator2 = rootK.sub(rootKLast);
-                uint denominator = rootK.mul(5).add(rootKLast);
+                uint denominator = rootK.add(rootKLast);
                 uint feeLiquidity = FullMath.mulDiv(numerator1, numerator2, denominator);
                 totalSupply = totalSupply.add(feeLiquidity);
             }
