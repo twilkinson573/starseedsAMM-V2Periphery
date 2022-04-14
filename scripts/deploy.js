@@ -30,7 +30,7 @@ const main = async () => {
   // DEPLOY ROUTER ============================================================
   const Router = await hre.ethers.getContractFactory("UniswapV2Router02");
   // Todo - replace this weth address with an env var from .env to allow multiple envs 
-  const router = await Router.deploy(factory.address, weth.address)
+  const router = await Router.deploy(factory.address, process.env.WETH_ADDRESS)
   await router.deployed();
 
   console.log('Router deployed to: ', await router.address);
