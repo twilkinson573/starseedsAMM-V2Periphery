@@ -1,6 +1,7 @@
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
 import '@nomiclabs/hardhat-ethers';
+import "@nomiclabs/hardhat-etherscan";
 
 // import "@nomiclabs/hardhat-waffle";
 require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
@@ -57,9 +58,15 @@ module.exports = {
       url: process.env.API_URL,
       accounts: [process.env.PRIVATE_KEY]
     },
-    // matic: {
-    //   url: process.env.API_URL,
-    //   accounts: [process.env.PRIVATE_KEY]
-    // },
+    matic: {
+      url: process.env.API_URL,
+      accounts: [process.env.PRIVATE_KEY]
+    },
+  },
+  etherscan: {
+    apiKey: {
+      polygonMumbai: process.env.ETHERSCAN_API_KEY,
+      polygon: process.env.ETHERSCAN_API_KEY,
+    },
   },
 };

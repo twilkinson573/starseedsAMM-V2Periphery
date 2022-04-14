@@ -9,7 +9,6 @@ const main = async () => {
   console.log('Deploying contracts with account: ', deployer.address);
   console.log('Account balance: ', accountBalance.toString());
 
-
   // DEPLOY FACTORY ===========================================================
   const Factory = await hre.ethers.getContractFactory("UniswapV2Factory");
   const factory = await Factory.deploy(deployer.address);
