@@ -28,7 +28,8 @@ library UniswapV2Library {
 
     // Switching to Factory query approach to fix contract not found
     function pairFor(address factory, address tokenA, address tokenB) internal view returns (address pair) {
-        pair = IUniswapV2Factory(factory).getPair(tokenA,tokenB);
+        (address token0, address token1) = sortTokens(tokenA, tokenB);
+        pair = IUniswapV2Factory(factory).getPair(token0,token1);
     }
 
     // fetches and sorts the reserves for a pair
