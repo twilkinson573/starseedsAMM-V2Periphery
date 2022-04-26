@@ -6,6 +6,10 @@ const main = async () => {
   const [deployer] = await hre.ethers.getSigners();
   const accountBalance = await deployer.getBalance();
 
+  const starAdd = "0x8440178087C4fd348D43d0205F4574e0348a06F0";
+  const ethAdd = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
+  const daoAdd = "0x17840DF7CAa07e298b16E8612157B90ED231C973";
+
   console.log('Deploying contracts with account: ', deployer.address);
   console.log('Account balance: ', accountBalance.toString());
 
@@ -35,6 +39,11 @@ const main = async () => {
   console.log('Router factory: ', await router.factory());
   console.log('Router WETH: ', await router.WETH());
   console.log(' ');
+
+  // CREATE PAIRS =============================================================
+
+  await factory.createPair(starAdd, ethAdd);
+  await factory.createPair(starAdd, daoAdd);
   
 };
 
